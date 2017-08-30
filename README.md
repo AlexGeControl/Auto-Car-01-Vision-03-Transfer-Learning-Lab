@@ -1,22 +1,27 @@
 # Transfer Learning Lab with VGG, Inception and ResNet
-[![Udacity - Self-Driving Car NanoDegree](https://s3.amazonaws.com/udacity-sdc/github/shield-carnd.svg)](http://www.udacity.com/drive)
 
-In this lab, you will continue exploring transfer learning. You've already explored feature extraction with AlexNet and TensorFlow. Next, you will use Keras to explore feature extraction with the VGG, Inception and ResNet architectures. The models you will use were trained for days or weeks on the [ImageNet dataset](http://www.image-net.org/). Thus, the weights encapsulate higher-level features learned from training on thousands of classes.
+On transfer learning, let's summarize when we should consider:
 
-We'll use two datasets in this lab:
+* Feature extraction (train only the top-level of the network, the rest of the network remains fixed)
+* Finetuning (train the entire network end-to-end, start with pre-trained weights)
+* Training from scratch (train the entire network end-to-end, start from random weights)
 
-1. German Traffic Sign Dataset
-2. Cifar10
+## Consider feature extraction when
 
-Unless you have a powerful GPU, running feature extraction on these models will take a significant amount of time. To make things we precomputed **bottleneck features** for each (network, dataset) pair, this will allow you experiment with feature extraction even on a modest CPU. You can think of bottleneck features as feature extraction but with caching.  Because the base network weights are frozen during feature extraction, the output for an image will always be the same. Thus, once the image has already been passed once through the network we can cache and reuse the output.
+the new dataset is small and similar to the original dataset. The higher-level features learned from the original dataset should transfer well to the new dataset.
 
-The files are encoded as such:
+## Consider finetuning when
 
-- {network}_{dataset}_bottleneck_features_train.p
-- {network}_{dataset}_bottleneck_features_validation.p
+1. the new dataset is large and similar to the original dataset. Altering the original weights should be safe because the network is unlikely to overfit the new, large dataset.
 
-network can be one of 'vgg', 'inception', or 'resnet'
+2. the new dataset is small and very different from the original dataset. You could also make the case for training from scratch. If you choose to finetune, it might be a good idea to only use features from the first few layers of the pre-trained network; features from the final layers of the pre-trained network might be too specific to the original dataset.
 
-dataset can be on of 'cifar10' or 'traffic'
+## Consider training from scratch when
 
-How will the pretrained model perform on the new datasets?
+the dataset is large and very different from the original dataset. In this case we have enough data to confidently train from scratch. However, even in this case it might be beneficial to initialize the entire network with pretrained weights and finetune it on the new dataset.
+
+Finally, keep in mind that for a lot of problems you won't need an architecture as complicated and powerful as VGG, Inception, or ResNet.
+
+These architectures were made for the task of classifying thousands of complex classes.
+
+A smaller network might be a better fit for a smaller problem, especially if you can comfortably train it on moderate hardware.

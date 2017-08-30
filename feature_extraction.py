@@ -1,14 +1,39 @@
 import pickle
+
+import numpy as np
 import tensorflow as tf
-# TODO: import Keras layers you need here
+
+import keras
+from keras.models import Sequential
+from keras.models import Model
+from keras.layers import Input, Flatten, Dense, Dropout
+from keras.optimizers import Adam
 
 flags = tf.app.flags
 FLAGS = flags.FLAGS
 
 # command line flags
-flags.DEFINE_string('training_file', '', "Bottleneck features training file (.p)")
-flags.DEFINE_string('validation_file', '', "Bottleneck features validation file (.p)")
+flags.DEFINE_string(
+    'training_file',
+    'features/GoogLeNet/inception_cifar10_100_bottleneck_features_train.p',
+    "Bottleneck features training file (.p)"
+)
+flags.DEFINE_string(
+    'validation_file',
+    'features/GoogLeNet/inception_cifar10_bottleneck_features_validation.p',
+    "Bottleneck features validation file (.p)"
+)
 
+flags.DEFINE_integer(
+    'epochs',
+    50,
+    "The number of epochs."
+)
+flags.DEFINE_integer(
+    'batch_size',
+    256,
+    "The batch size."
+)
 
 def load_bottleneck_data(training_file, validation_file):
     """
@@ -36,19 +61,46 @@ def load_bottleneck_data(training_file, validation_file):
 
 def main(_):
     # load bottleneck data
-    X_train, y_train, X_val, y_val = load_bottleneck_data(FLAGS.training_file, FLAGS.validation_file)
+    X_val, y_val, X_train, y_train = load_bottleneck_data(FLAGS.training_file, FLAGS.validation_file)
 
     print(X_train.shape, y_train.shape)
     print(X_val.shape, y_val.shape)
 
-    # TODO: define your model and hyperparams here
-    # make sure to adjust the number of classes based on
-    # the dataset
-    # 10 for cifar10
-    # 43 for traffic
+    # Define the model
+    N_CLASSES = len(np.unique(y_train))
+    INPUT_SHAPE = X_train.shape[1: ]
 
-    # TODO: train your model here
+    '''
+    # Style 01--Sequential
+    model = Sequential()
+    model.add(Flatten(input_shape=INPUT_SHAPE))
+    model.add(Dense(N_CLASSES, activation='softmax'))
+    model.summary()
+    '''
+    # Style 02--Functional
+    inp = Input(shape=INPUT_SHAPE)
+    x = Flatten()(inp)
+    x = Dense(N_CLASSES, activation='softmax')(x)
+    model = Model(inp, x)
 
+    model.compile(
+        loss='sparse_categorical_crossentropy',
+        optimizer=Adam(),
+        metrics=['accuracy']
+    )
+
+    # Train your model here
+    history = model.fit(
+        X_train, y_train,
+        batch_size = FLAGS.batch_size, nb_epoch = FLAGS.epochs,
+        verbose=1,
+        validation_data=(X_val, y_val)
+    )
+
+    score = model.evaluate(X_val, y_val, verbose=0)
+
+    print('Test loss:', score[0])
+    print('Test accuracy:', score[1])
 
 # parses flags and calls the `main` function above
 if __name__ == '__main__':
